@@ -190,8 +190,12 @@ func (h *HexView) Render(v *render.View) {
 	}
 }
 
-// HandleEvent processes navigation keys.
+// HandleEvent processes navigation keys and mouse input.
 func (h *HexView) HandleEvent(ev input.Event) bool {
+	if ev.Type == input.EventMouse {
+		return h.handleMouse(ev.Mouse)
+	}
+
 	if ev.Type != input.EventKey {
 		return false
 	}
@@ -233,6 +237,85 @@ func (h *HexView) HandleEvent(ev input.Event) bool {
 	}
 
 	return false
+}
+
+func (h *HexView) handleMouse(m input.MouseEvent) bool {
+	switch m.Button {
+	case input.MouseWheelUp:
+		h.scrollY = max(h.scrollY-3, 0)
+		// Keep cursor in visible range.
+		topOffset := h.scrollY * bytesPerRow
+		if h.cursor >= (h.scrollY+h.VisibleRows())*bytesPerRow {
+			h.cursor = topOffset
+		}
+		return true
+
+	case input.MouseWheelDown:
+		maxScroll := max(h.TotalRows()-h.VisibleRows(), 0)
+		h.scrollY = min(h.scrollY+3, maxScroll)
+		// Keep cursor in visible range.
+		bottomOffset := (h.scrollY + h.VisibleRows()) * bytesPerRow
+		if h.cursor < h.scrollY*bytesPerRow {
+			h.cursor = min(h.scrollY*bytesPerRow, h.buf.Len()-1)
+		}
+		_ = bottomOffset
+		return true
+
+	case input.MouseLeft:
+		offset := h.hitTestByte(m.X, m.Y)
+		if offset >= 0 {
+			h.SetCursor(offset)
+		}
+		return true
+	}
+
+	return false
+}
+
+// hitTestByte maps a click at view-local (x, y) to a byte offset, or -1.
+func (h *HexView) hitTestByte(x, y int) int {
+	// Row 0 is the header — data starts at row 1.
+	if y < 1 || y >= h.viewHeight {
+		return -1
+	}
+	dataRow := y - 1 // Row within visible data.
+	fileRow := h.scrollY + dataRow
+	rowOffset := fileRow * bytesPerRow
+	if rowOffset >= h.buf.Len() {
+		return -1
+	}
+
+	// Hex area: starts at column 10, each byte is 3 chars, extra space after byte 7.
+	// Byte i is at column: 10 + i*3 + (1 if i >= 8)
+	hexStart := 10
+	hexEnd := hexStart + bytesPerRow*3 + 1 // +1 for the group gap
+	asciiStart := 10 + bytesPerRow*3 + 2
+
+	if x >= hexStart && x < hexEnd {
+		// Map x to byte column in hex area.
+		rel := x - hexStart
+		// Account for the extra space between byte 7 and 8.
+		if rel >= 8*3 {
+			rel-- // Remove the gap.
+		}
+		col := rel / 3
+		if col >= 0 && col < bytesPerRow {
+			offset := rowOffset + col
+			if offset < h.buf.Len() {
+				return offset
+			}
+		}
+	}
+
+	if x >= asciiStart && x < asciiStart+bytesPerRow {
+		col := x - asciiStart
+		offset := rowOffset + col
+		if offset < h.buf.Len() {
+			return offset
+		}
+	}
+
+	return -1
 }
 
 func (h *HexView) Focus()          { h.focused = true }
