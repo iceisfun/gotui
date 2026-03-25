@@ -1,6 +1,6 @@
 package render
 
-import "github.com/iceisfun/gorepl/pkg/text"
+import "github.com/iceisfun/gotui/pkg/text"
 
 // Buffer is a 2D grid of cells (the framebuffer).
 // New buffers have all cells set to transparent.
@@ -68,15 +68,28 @@ func (b *Buffer) SetRune(x, y int, r rune, s text.Style) {
 }
 
 // WriteString writes a string starting at (x, y) with the given style.
-// Returns the number of columns consumed.
+// Returns the number of columns consumed. Wide characters (e.g. CJK)
+// occupy two cells: the primary cell holds the rune with Width=2, and
+// the next cell is a zero-width continuation cell.
 func (b *Buffer) WriteString(x, y int, str string, s text.Style) int {
 	col := 0
 	for _, r := range str {
+		rw := text.RuneWidth(r)
+		if rw == 0 {
+			continue
+		}
+		// Stop if the character (including its full width) won't fit.
 		if !b.inBounds(x+col, y) {
 			break
 		}
-		b.cells[y*b.width+x+col] = Cell{Rune: r, Width: 1, Style: s}
-		col++
+		if rw == 2 && !b.inBounds(x+col+1, y) {
+			break
+		}
+		b.cells[y*b.width+x+col] = Cell{Rune: r, Width: uint8(rw), Style: s}
+		if rw == 2 {
+			b.cells[y*b.width+x+col+1] = Cell{Rune: 0, Width: 0, Style: s}
+		}
+		col += rw
 	}
 	return col
 }

@@ -1,8 +1,8 @@
 package layout
 
 import (
-	"github.com/iceisfun/gorepl/pkg/input"
-	"github.com/iceisfun/gorepl/pkg/render"
+	"github.com/iceisfun/gotui/pkg/input"
+	"github.com/iceisfun/gotui/pkg/render"
 )
 
 // Modal is a centered floating overlay that, when visible, renders its child

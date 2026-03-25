@@ -7,9 +7,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/iceisfun/gorepl/pkg/input"
-	"github.com/iceisfun/gorepl/pkg/render"
-	"github.com/iceisfun/gorepl/pkg/term"
+	"github.com/iceisfun/gotui/pkg/input"
+	"github.com/iceisfun/gotui/pkg/render"
+	"github.com/iceisfun/gotui/pkg/term"
 )
 
 // App is the top-level event loop owner. It manages the terminal, layout tree,

@@ -1,6 +1,6 @@
 package repl
 
-import "github.com/iceisfun/gorepl/pkg/text"
+import "github.com/iceisfun/gotui/pkg/text"
 
 // Executor runs user input and returns output. The host application provides
 // the implementation — the REPL package has no dependency on any language.

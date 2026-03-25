@@ -3,9 +3,9 @@ package hexedit
 import (
 	"fmt"
 
-	"github.com/iceisfun/gorepl/pkg/input"
-	"github.com/iceisfun/gorepl/pkg/render"
-	"github.com/iceisfun/gorepl/pkg/text"
+	"github.com/iceisfun/gotui/pkg/input"
+	"github.com/iceisfun/gotui/pkg/render"
+	"github.com/iceisfun/gotui/pkg/text"
 )
 
 const bytesPerRow = 16

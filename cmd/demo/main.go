@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/iceisfun/gorepl/pkg/input"
-	"github.com/iceisfun/gorepl/pkg/layout"
-	"github.com/iceisfun/gorepl/pkg/render"
-	"github.com/iceisfun/gorepl/pkg/term"
-	"github.com/iceisfun/gorepl/pkg/text"
+	"github.com/iceisfun/gotui/pkg/input"
+	"github.com/iceisfun/gotui/pkg/layout"
+	"github.com/iceisfun/gotui/pkg/render"
+	"github.com/iceisfun/gotui/pkg/term"
+	"github.com/iceisfun/gotui/pkg/text"
 )
 
 // ClickPanel is a panel with clickable buttons inside it.

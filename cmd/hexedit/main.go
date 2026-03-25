@@ -6,12 +6,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/iceisfun/gorepl/pkg/hexedit"
-	"github.com/iceisfun/gorepl/pkg/input"
-	"github.com/iceisfun/gorepl/pkg/layout"
-	"github.com/iceisfun/gorepl/pkg/render"
-	"github.com/iceisfun/gorepl/pkg/term"
-	"github.com/iceisfun/gorepl/pkg/text"
+	"github.com/iceisfun/gotui/pkg/hexedit"
+	"github.com/iceisfun/gotui/pkg/input"
+	"github.com/iceisfun/gotui/pkg/layout"
+	"github.com/iceisfun/gotui/pkg/render"
+	"github.com/iceisfun/gotui/pkg/term"
+	"github.com/iceisfun/gotui/pkg/text"
 )
 
 // HexApp ties together the hex view, info panel, status bar, and modal dialogs.

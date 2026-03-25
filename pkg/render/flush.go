@@ -1,8 +1,8 @@
 package render
 
 import (
-	"github.com/iceisfun/gorepl/pkg/term"
-	"github.com/iceisfun/gorepl/pkg/text"
+	"github.com/iceisfun/gotui/pkg/term"
+	"github.com/iceisfun/gotui/pkg/text"
 )
 
 // Flush writes the differences between prev and curr to the terminal writer.

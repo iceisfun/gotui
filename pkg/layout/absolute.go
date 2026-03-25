@@ -1,8 +1,8 @@
 package layout
 
 import (
-	"github.com/iceisfun/gorepl/pkg/input"
-	"github.com/iceisfun/gorepl/pkg/render"
+	"github.com/iceisfun/gotui/pkg/input"
+	"github.com/iceisfun/gotui/pkg/render"
 )
 
 // AbsoluteChild describes a child positioned at an absolute location.

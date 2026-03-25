@@ -6,11 +6,11 @@ import (
 	"os"
 	"unicode"
 
-	"github.com/iceisfun/gorepl/pkg/input"
-	"github.com/iceisfun/gorepl/pkg/layout"
-	"github.com/iceisfun/gorepl/pkg/render"
-	"github.com/iceisfun/gorepl/pkg/term"
-	"github.com/iceisfun/gorepl/pkg/text"
+	"github.com/iceisfun/gotui/pkg/input"
+	"github.com/iceisfun/gotui/pkg/layout"
+	"github.com/iceisfun/gotui/pkg/render"
+	"github.com/iceisfun/gotui/pkg/term"
+	"github.com/iceisfun/gotui/pkg/text"
 )
 
 // MenuItem represents one entry in a dropdown menu.

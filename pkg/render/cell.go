@@ -1,6 +1,6 @@
 package render
 
-import "github.com/iceisfun/gorepl/pkg/text"
+import "github.com/iceisfun/gotui/pkg/text"
 
 // Cell is one character position in the framebuffer.
 type Cell struct {

@@ -1,4 +1,4 @@
-module github.com/iceisfun/gorepl
+module github.com/iceisfun/gotui
 
 go 1.25.0
 

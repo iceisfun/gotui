@@ -1,8 +1,8 @@
 package repl
 
 import (
-	"github.com/iceisfun/gorepl/pkg/render"
-	"github.com/iceisfun/gorepl/pkg/text"
+	"github.com/iceisfun/gotui/pkg/render"
+	"github.com/iceisfun/gotui/pkg/text"
 )
 
 // CompletionPopup renders a list of completion proposals as a floating overlay.

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/iceisfun/gorepl/pkg/text"
+	"github.com/iceisfun/gotui/pkg/text"
 )
 
 // Writer is a buffered writer that builds ANSI escape sequences

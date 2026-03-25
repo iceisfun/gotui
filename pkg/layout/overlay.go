@@ -3,7 +3,7 @@ package layout
 import (
 	"slices"
 
-	"github.com/iceisfun/gorepl/pkg/render"
+	"github.com/iceisfun/gotui/pkg/render"
 )
 
 // overlayEntry is an overlay with its absolute screen position.

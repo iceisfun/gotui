@@ -1,8 +1,8 @@
 package widget
 
 import (
-	"github.com/iceisfun/gorepl/pkg/render"
-	"github.com/iceisfun/gorepl/pkg/text"
+	"github.com/iceisfun/gotui/pkg/render"
+	"github.com/iceisfun/gotui/pkg/text"
 )
 
 // Alignment controls horizontal text placement.

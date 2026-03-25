@@ -3,7 +3,7 @@ package render
 import (
 	"time"
 
-	"github.com/iceisfun/gorepl/pkg/input"
+	"github.com/iceisfun/gotui/pkg/input"
 )
 
 // Renderable is the minimum interface for anything that can draw itself.

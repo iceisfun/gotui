@@ -1,8 +1,8 @@
 package layout
 
 import (
-	"github.com/iceisfun/gorepl/pkg/input"
-	"github.com/iceisfun/gorepl/pkg/render"
+	"github.com/iceisfun/gotui/pkg/input"
+	"github.com/iceisfun/gotui/pkg/render"
 )
 
 // Viewport wraps a Renderable whose content may be larger than its visible area.

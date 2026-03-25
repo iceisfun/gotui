@@ -1,6 +1,6 @@
 package render
 
-import "github.com/iceisfun/gorepl/pkg/text"
+import "github.com/iceisfun/gotui/pkg/text"
 
 // View provides a clipped, offset window into a Buffer.
 // All coordinates are relative to the view's origin. Writes outside the
@@ -43,7 +43,7 @@ func (v *View) SetRune(x, y int, r rune, s text.Style) {
 }
 
 // WriteString writes a string at view-relative (x, y), clipping at the view edge.
-// Returns columns consumed.
+// Returns columns consumed. Wide characters occupy two cells.
 func (v *View) WriteString(x, y int, str string, s text.Style) int {
 	by := v.bounds.Y + y
 	if by < v.bounds.Y || by >= v.bounds.Y+v.bounds.Height {
@@ -52,16 +52,27 @@ func (v *View) WriteString(x, y int, str string, s text.Style) int {
 
 	col := 0
 	for _, r := range str {
-		bx := v.bounds.X + x + col
-		if bx < v.bounds.X {
-			col++
+		rw := text.RuneWidth(r)
+		if rw == 0 {
 			continue
 		}
-		if bx >= v.bounds.X+v.bounds.Width {
+		bx := v.bounds.X + x + col
+		if bx < v.bounds.X {
+			col += rw
+			continue
+		}
+		rightEdge := v.bounds.X + v.bounds.Width
+		if bx >= rightEdge {
 			break
 		}
-		v.buf.SetRune(bx, by, r, s)
-		col++
+		if rw == 2 && bx+1 >= rightEdge {
+			break
+		}
+		v.buf.SetCell(bx, by, Cell{Rune: r, Width: uint8(rw), Style: s})
+		if rw == 2 {
+			v.buf.SetCell(bx+1, by, Cell{Rune: 0, Width: 0, Style: s})
+		}
+		col += rw
 	}
 	return col
 }

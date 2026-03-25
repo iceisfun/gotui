@@ -3,8 +3,8 @@ package hexedit
 import (
 	"fmt"
 
-	"github.com/iceisfun/gorepl/pkg/render"
-	"github.com/iceisfun/gorepl/pkg/text"
+	"github.com/iceisfun/gotui/pkg/render"
+	"github.com/iceisfun/gotui/pkg/text"
 )
 
 // InfoPanel displays byte interpretations at the current cursor position.
