@@ -110,6 +110,9 @@ func main() {
   TextView with keyboard and mouse interaction.
 - **Infinite scrollable surface**: Virtual canvas with camera positioning for
   applications like map viewers and game worlds.
+- **Bracketed paste**: Paste events are decoded from `ESC[200~...ESC[201~`
+  into `EventPaste` with the pasted text in `ev.Paste`. The REPL component
+  handles paste automatically via the editor's `InsertString` method.
 - **CJK-aware text handling**: Rune width measurement, string truncation, and
   word wrapping that correctly handles double-width characters.
 - **Markup parser**: Bracket-tag syntax (`[bold red on blue]text[/]`) for

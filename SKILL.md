@@ -35,8 +35,9 @@ SKILLS:
 - Panel draws a border (Single/Double/Rounded) and delegates to a child.
 - text.Parse("[bold red]hello[/]") returns a StyledLine with markup support.
 - Color constructors: text.Red(), text.RGB(r,g,b), text.Color256(n). Style chains: style.Bold().WithFg(text.Cyan()).
-- The repl package provides a full REPL component (Editor, History, CompletionPopup, Output) that implements Focusable, Cursorable, Scrollable, and Overlayable.
+- The repl package provides a full REPL component (Editor, History, CompletionPopup, Output) that implements Focusable, Cursorable, Scrollable, and Overlayable. It handles paste events automatically.
 - REPL needs an Executor interface: Execute(source) (string, error) and IsComplete(source) bool. Optional: Completer, Highlighter.
+- Paste events: check ev.Type == input.EventPaste before EventKey. The pasted text is in ev.Paste. Call InsertString(ev.Paste) to insert it.
 ```
 
 ## Smallest Useful Example
@@ -235,6 +236,28 @@ func (c *ClickableList) HandleEvent(ev input.Event) bool {
     return false
 }
 ```
+
+### Handling Paste Events
+
+The terminal enables bracketed paste mode automatically. The decoder parses
+`ESC[200~...ESC[201~` sequences into `EventPaste` events with the pasted text
+in `ev.Paste`. Handle them before checking for key events:
+
+```go
+func (e *MyEditor) HandleEvent(ev input.Event) bool {
+    if ev.Type == input.EventPaste {
+        e.InsertString(ev.Paste)
+        return true
+    }
+    if ev.Type != input.EventKey {
+        return false
+    }
+    // ... handle key events
+}
+```
+
+The built-in REPL component handles paste events automatically via the editor's
+`InsertString` method.
 
 ### Creating a Modal Dialog
 
