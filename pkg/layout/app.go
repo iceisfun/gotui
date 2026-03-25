@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/iceisfun/gorepl/pkg/input"
 	"github.com/iceisfun/gorepl/pkg/render"
@@ -27,10 +28,15 @@ type App struct {
 	overlayBuf *render.Buffer
 
 	// Focus management.
-	focused render.Focusable
+	focused    render.Focusable
+	focusOrder []render.Focusable
+	autoTab    bool // When true, Tab/Backtab cycle focus. Default true.
 
 	// Global key bindings — checked before focused renderable.
 	bindings []render.KeyBinding
+
+	// Tick support for Updatable renderables.
+	tickInterval time.Duration
 
 	// Set true to request a re-render.
 	dirty bool
@@ -52,6 +58,7 @@ func NewApp(t *term.Terminal, root render.Renderable) *App {
 		back:       render.NewBuffer(cols, rows),
 		baseBuf:    render.NewBuffer(cols, rows),
 		overlayBuf: render.NewBuffer(cols, rows),
+		autoTab:    true,
 		cols:       cols,
 		rows:       rows,
 	}
@@ -84,6 +91,65 @@ func (a *App) BindRune(r rune, mod input.ModMask, action func()) {
 	a.Bind(render.KeyBinding{Key: input.KeyRune, Mod: mod, Rune: r, Action: action})
 }
 
+// SetTickInterval sets the interval for calling Update on Updatable renderables.
+// A zero or negative duration disables ticking.
+func (a *App) SetTickInterval(d time.Duration) {
+	a.tickInterval = d
+}
+
+// AddFocusable registers a renderable in the tab-focus order.
+func (a *App) AddFocusable(f render.Focusable) {
+	a.focusOrder = append(a.focusOrder, f)
+}
+
+// CollectFocusables walks the renderable tree and populates focusOrder with all
+// Focusable renderables found via depth-first traversal.
+func (a *App) CollectFocusables() {
+	a.focusOrder = a.focusOrder[:0]
+	a.collectFocusables(a.root)
+}
+
+func (a *App) collectFocusables(r render.Renderable) {
+	if f, ok := r.(render.Focusable); ok {
+		a.focusOrder = append(a.focusOrder, f)
+	}
+	if c, ok := r.(render.Container); ok {
+		for _, child := range c.Children() {
+			a.collectFocusables(child)
+		}
+	}
+}
+
+// FocusNext moves focus to the next renderable in the tab order.
+func (a *App) FocusNext() {
+	if len(a.focusOrder) == 0 {
+		return
+	}
+	idx := a.focusIndex()
+	next := (idx + 1) % len(a.focusOrder)
+	a.SetFocus(a.focusOrder[next])
+}
+
+// FocusPrev moves focus to the previous renderable in the tab order.
+func (a *App) FocusPrev() {
+	if len(a.focusOrder) == 0 {
+		return
+	}
+	idx := a.focusIndex()
+	prev := (idx - 1 + len(a.focusOrder)) % len(a.focusOrder)
+	a.SetFocus(a.focusOrder[prev])
+}
+
+// focusIndex returns the index of the currently focused renderable, or -1.
+func (a *App) focusIndex() int {
+	for i, f := range a.focusOrder {
+		if f == a.focused {
+			return i
+		}
+	}
+	return -1
+}
+
 // RequestRender marks the screen as needing a redraw.
 func (a *App) RequestRender() {
 	a.dirty = true
@@ -101,6 +167,13 @@ func (a *App) Root() render.Renderable {
 
 // Run starts the main event loop. It blocks until Quit is called or ctx is cancelled.
 func (a *App) Run(ctx context.Context) error {
+	// Auto-bind Tab / Backtab for focus cycling. Done at the start of Run so
+	// it does not conflict with user bindings added before Run.
+	if a.autoTab {
+		a.Bind(render.KeyBinding{Key: input.KeyTab, Action: func() { a.FocusNext() }})
+		a.Bind(render.KeyBinding{Key: input.KeyBacktab, Action: func() { a.FocusPrev() }})
+	}
+
 	// Handle SIGWINCH.
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGWINCH)
@@ -111,6 +184,15 @@ func (a *App) Run(ctx context.Context) error {
 	// Initial layout and render.
 	a.resize()
 	a.render()
+
+	// Set up tick channel for Updatable support.
+	var tickCh <-chan time.Time
+	var ticker *time.Ticker
+	if a.tickInterval > 0 {
+		ticker = time.NewTicker(a.tickInterval)
+		tickCh = ticker.C
+		defer ticker.Stop()
+	}
 
 	var batch []input.Event
 
@@ -127,6 +209,11 @@ func (a *App) Run(ctx context.Context) error {
 
 		case <-sigCh:
 			a.resize()
+
+		case t := <-tickCh:
+			_ = t
+			a.walkUpdatables(a.root, a.tickInterval)
+			a.dirty = true
 
 		case <-ctx.Done():
 			return ctx.Err()
@@ -179,11 +266,51 @@ func (a *App) resize() {
 	a.overlayBuf.Resize(cols, rows)
 
 	// Re-layout the root.
+	rootBounds := render.Rect{X: 0, Y: 0, Width: cols, Height: rows}
 	if c, ok := a.root.(interface{ Layout(render.Rect) }); ok {
-		c.Layout(render.Rect{X: 0, Y: 0, Width: cols, Height: rows})
+		c.Layout(rootBounds)
 	}
 
+	// Walk the entire tree to ensure every Container gets Layout called,
+	// even if a custom wrapper forgets to forward Layout to its children.
+	layoutTree(a.root)
+
 	a.dirty = true
+}
+
+// layoutTree recursively walks the renderable tree and calls Layout on every
+// Container using its parent-assigned bounds. This is a safety net: well-behaved
+// containers already forward Layout to children, but this ensures nothing is
+// missed if a custom wrapper does not.
+func layoutTree(r render.Renderable) {
+	c, ok := r.(render.Container)
+	if !ok {
+		return
+	}
+	children := c.Children()
+	childBounds := c.ChildBounds()
+	for i, child := range children {
+		if i >= len(childBounds) {
+			break
+		}
+		if cc, ok2 := child.(render.Container); ok2 {
+			cc.Layout(childBounds[i])
+		}
+		layoutTree(child)
+	}
+}
+
+// walkUpdatables recursively walks the renderable tree and calls Update(dt) on
+// every renderable that implements Updatable.
+func (a *App) walkUpdatables(r render.Renderable, dt time.Duration) {
+	if u, ok := r.(render.Updatable); ok {
+		u.Update(dt)
+	}
+	if c, ok := r.(render.Container); ok {
+		for _, child := range c.Children() {
+			a.walkUpdatables(child, dt)
+		}
+	}
 }
 
 func (a *App) render() {
