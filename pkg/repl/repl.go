@@ -130,6 +130,10 @@ func (r *REPL) Render(v *render.View) {
 
 // HandleEvent processes keyboard input.
 func (r *REPL) HandleEvent(ev input.Event) bool {
+	if ev.Type == input.EventPaste {
+		r.editor.InsertString(ev.Paste)
+		return true
+	}
 	if ev.Type != input.EventKey {
 		return false
 	}
