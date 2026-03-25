@@ -1,5 +1,5 @@
-# Binaries
-demo
-hexedit
-fsview
+# Binaries (root only, not pkg/cmd dirs)
+/demo
+/hexedit
+/fsview
 *.exe
